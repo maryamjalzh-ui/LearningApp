@@ -26,17 +26,24 @@ class ActivityManager: ObservableObject {
     }
 
     init() {
-        // تهيئة الخصائص باستخدام قيم آمنة ومحسوبة داخل المُهيئ
-        
+        // 1) احسب اليوم وبداية الأسبوع
         let today = Date().startOfDay!
-        self.startOfWeek = today.startOfWeek!
-        self.selectedDate = today
+        let weekStart = today.startOfWeek!
         
-        // إعداد حالة القاموس باستخدام التواريخ الآمنة
+        // 2) هيّئ الخصائص المخزنة أولًا
+        self.startOfWeek = weekStart
+        self.selectedDate = today
+        self.dailyStatus = [:]
+        
+        // 3) احسب تواريخ الأمس وبكرا محليًا بدون استخدام self
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        
+        // 4) عيّن القيم بعد اكتمال التهيئة
         self.dailyStatus = [
-            today: .Logged, // اليوم الحالي مسجل كـ "Learned Today" بشكل افتراضي
-            safeDate(-1): .Logged, // مثال على بيانات سابقة
-            safeDate(1): .Freezed // مثال على بيانات مستقبلية
+            today: .Logged,
+            yesterday: .Logged,
+            tomorrow: .Freezed
         ]
     }
     
