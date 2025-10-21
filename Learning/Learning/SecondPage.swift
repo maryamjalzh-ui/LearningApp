@@ -277,16 +277,18 @@ struct SecondPage: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.primaryText)
-                    
                     Spacer()
                     
                     Button { /* Action */ } label: {
-                        Image(systemName: "bell.fill")
-                            .font(.title2)
-                            .foregroundColor(.primaryText)
+                        Image(systemName: "calendar" )
+                            .buttonStyle(.glassProminent)
+
+                            .font(.title3)
+                            .foregroundColor(.white.opacity(0.8))
                     }
                     Button { /* Action */ } label: {
-                        Image(systemName: "gearshape.fill")
+                        Image(systemName: "pencil.and.outline")
+                            .buttonStyle(.glassProminent)
                             .font(.title2)
                             .foregroundColor(.primaryText)
                     }
