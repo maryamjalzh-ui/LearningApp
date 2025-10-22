@@ -13,7 +13,14 @@ class ActivityManager: ObservableObject {
     @Published var startOfWeek: Date
     @Published var selectedDate: Date
     @Published var dailyStatus: [Date: ActivityStatus]
-
+    
+    // Freezes counters
+    @Published var weeklyFreezesUsed: Int = 0
+    @Published var monthlyFreezesUsed: Int = 0
+    @Published var yearlyFreezesUsed: Int = 0
+    
+    private var timer: AnyCancellable?
+    
     init() {
         let today = Date().startOfDay!
         let weekStart = today.startOfWeek!
@@ -30,8 +37,11 @@ class ActivityManager: ObservableObject {
             yesterday: .Logged,
             tomorrow: .Freezed
         ]
+        
+        startMidnightTimer()
     }
     
+    // MARK: - Computed Properties
     var daysLearned: Int {
         dailyStatus.values.filter { $0 == .Logged }.count
     }
@@ -39,9 +49,39 @@ class ActivityManager: ObservableObject {
     var daysFreezed: Int {
         dailyStatus.values.filter { $0 == .Freezed }.count
     }
-
+    
+    // MARK: - Update Status
     func updateStatus(to status: ActivityStatus) {
         dailyStatus[selectedDate.startOfDay!] = status
+    }
+    
+    // MARK: - Freezes Logic
+    func canUseFreeze() -> Bool {
+        let weeklyLimit = 2
+        return weeklyFreezesUsed < weeklyLimit && dailyStatus[selectedDate.startOfDay!] != .Logged
+    }
+    
+    func useFreeze() {
+        guard canUseFreeze() else { return }
+        dailyStatus[selectedDate.startOfDay!] = .Freezed
+        weeklyFreezesUsed += 1
+        monthlyFreezesUsed += 1
+        yearlyFreezesUsed += 1
+    }
+    
+    // MARK: - Midnight Reset Timer
+    private func startMidnightTimer() {
+        let calendar = Calendar.current
+        let now = Date()
+        let nextMidnight = calendar.nextDate(after: now, matching: DateComponents(hour:0, minute:0, second:0), matchingPolicy: .nextTime)!
+        let interval = nextMidnight.timeIntervalSince(now)
+        
+        timer = Timer.publish(every: interval, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+                self?.startMidnightTimer() // restart timer for next day
+            }
     }
 }
 
@@ -289,7 +329,7 @@ struct SummaryCardsView: View {
         HStack(spacing: 15) {
             SummaryCard(
                 value: manager.daysLearned,
-                label: "Days Learned",
+                label: manager.daysLearned == 1 ? "Day Learned" : "Days Learned",
                 color: Color.accentOrange.opacity(0.8),
                 icon: "flame.fill",
                 iconColor: .accentOrange
@@ -297,7 +337,7 @@ struct SummaryCardsView: View {
             
             SummaryCard(
                 value: manager.daysFreezed,
-                label: "Day Freezed",
+                label: manager.daysFreezed == 1 ? "Day Freezed" : "Days Freezed",
                 color: Color.freezedCyan.opacity(0.7),
                 icon: "cube.fill",
                 iconColor: .FreezedColor
@@ -312,7 +352,7 @@ struct SecondaryActionButtonView: View {
     @ObservedObject var manager: ActivityManager
     
     var body: some View {
-        Button(action: { manager.updateStatus(to: .Freezed) }) {
+        Button(action: { manager.useFreeze() }) {
             Text("Log as Freezed")
                 .font(.headline)
                 .fontWeight(.semibold)
@@ -323,6 +363,7 @@ struct SecondaryActionButtonView: View {
         }
         .buttonStyle(.plain)
         .shadow(color: Color.freezedCyan.opacity(0.4), radius: 40, x: 0, y: 0)
+        .disabled(!manager.canUseFreeze())
     }
 }
 
