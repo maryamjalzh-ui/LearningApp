@@ -85,7 +85,7 @@ struct DateButton: View {
                     .background(
                         Group {
                             if isSelected {
-                                Circle().fill(Color.gray.opacity(0.4))
+                                Circle().fill(Color.orange.opacity(0.90))
                             } else if status == .Logged {
                                 Circle().fill(Color.accentOrange.opacity(0.3))
                             } else if status == .Freezed {
