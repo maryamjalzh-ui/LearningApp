@@ -394,7 +394,7 @@ struct SecondPage: View {
                             value: manager.daysLearned,
                             label: "Days Learned",
                             color: Color.accentOrange.opacity(0.8),
-                            icon: "flame.fill"
+                            icon: "flame.fill",
                         )
                         
                         
@@ -403,7 +403,7 @@ struct SecondPage: View {
                             label: "Day Freezed",
                             color: Color.freezedCyan.opacity(0.7),
                             icon: "cube.fill"
-                        )
+                                .foregroundColor(.blue)                        )
                         
                     }
                 }

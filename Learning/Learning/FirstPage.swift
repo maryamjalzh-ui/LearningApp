@@ -19,7 +19,7 @@ struct DurationButton: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(isSelected ? .primaryText : .secondaryText)
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 20)
                 // تحديد الارتفاع الثابت 48 نقطة
                 .frame(height: 48)
                 .background(
@@ -35,7 +35,7 @@ struct DurationButton: View {
                     }
                 )
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.plain)
     }
 }
 
@@ -70,9 +70,10 @@ struct FirstPage: View {
                             .scaledToFit()
                             .frame(width: 250, height: 250) // الحجم الجديد
                             .padding(.top)
+                        
                         Spacer()
                     }
-                    .padding(-50)
+//                    .padding(-50)
 
                     // 2. Header Text
                     VStack(alignment: .leading, spacing: 5) {
