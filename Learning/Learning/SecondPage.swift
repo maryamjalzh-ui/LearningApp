@@ -1,7 +1,7 @@
 import SwiftUI
 import Combine
 
-// يتم جلب جميع الألوان من ملف AppColors.swift
+// يتم جلب جميع الألوان من ملف AppColors.swift (يفترض وجودها)
 
 // MARK: - App State (Main Activity Status and Data)
 
@@ -127,7 +127,7 @@ struct DateButton: View {
             // منطق حقيقي: عند النقر، يتم تحديث اليوم المختار في المدير
             manager.selectedDate = date.startOfDay!
         }) {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Text(date.dayAbbreviation)
                     .font(.caption)
                     .fontWeight(.bold)
@@ -137,12 +137,13 @@ struct DateButton: View {
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 50, height: 40)
                     .background(
                         Group {
                             if isSelected {
                                 Circle()
-                                    .fill(selectedBgColor.opacity(status == .Default ? 0.3 : 1.0)) // لون خفيف إذا كان مختارًا و Default
+                                    .fill(selectedBgColor.opacity(status == .Default ? 0.3 : 1.0))
+                                // لون خفيف إذا كان مختارًا و Default
                             } else {
                                 // تلوين الأيام التي تم تسجيلها أو تجميدها حتى لو لم تكن مختارة
                                 if status == .Logged {
@@ -151,6 +152,7 @@ struct DateButton: View {
                                     Circle().fill(Color.freezedCyan.opacity(0.3))
                                 } else {
                                     Color.clear
+                                    
                                 }
                             }
                         }
@@ -162,7 +164,6 @@ struct DateButton: View {
 }
 
 // MARK: - Component 2: Summary Card (بطاقات الإحصائيات الصغيرة)
-// ... (محتوى هذا المكون لم يتغير من النسخة الأخيرة)
 struct SummaryCard: View {
     let value: Int
     let label: String
@@ -188,11 +189,11 @@ struct SummaryCard: View {
             
             Spacer()
         }
-        .padding(.vertical, 25)
-        .padding(.horizontal, 20)
+        .padding(.vertical, 2)
+        .padding(.horizontal, 2)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 15)
+            RoundedRectangle(cornerRadius: 30)
                 .fill(color.opacity(0.4))
         )
         .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -202,6 +203,7 @@ struct SummaryCard: View {
 // MARK: - Component 3: Main Dynamic Button (الزر الدائري الرئيسي)
 struct MainActionButton: View {
     @ObservedObject var manager: ActivityManager
+    
     
     var text: String {
         switch manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default {
@@ -216,6 +218,7 @@ struct MainActionButton: View {
         case .Default: return .accentOrange
         case .Logged: return .accentOrange
         case .Freezed: return .freezedCyan
+            
         }
     }
     
@@ -232,10 +235,13 @@ struct MainActionButton: View {
                 .background(
                     Circle()
                         .fill(bgColor)
-                        .shadow(color: bgColor.opacity(0.6), radius: 15, x: 0, y: 5)
+                        .shadow(color: bgColor.opacity(0.6), radius: 10, x: 0, y: 10)
+                        .glassEffect(.clear.tint(Color.gray.opacity(150)))
+            
                 )
+            
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glass)
     }
 }
 
@@ -263,149 +269,175 @@ struct SecondPage: View {
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: manager.startOfWeek).capitalized
     }
-
+    
     var body: some View {
-        ZStack {
-            Color.primaryBackground
-                .edgesIgnoringSafeArea(.all)
-
-            VStack(spacing: 25) {
+        NavigationStack{
+            ZStack {
+                Color.primaryBackground
+                    .edgesIgnoringSafeArea(.all)
                 
-                // 1. شريط التنقل المخصص (Activity Header)
-                HStack {
-                    Text("Activity")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primaryText)
-                    Spacer()
+                VStack(spacing: 25) {
                     
-                    Button { /* Action */ } label: {
-                        Image(systemName: "calendar" )
-                            .buttonStyle(.glassProminent)
-
+                    // 1. شريط التنقل المخصص (Header) - تمت إزالته من هنا ونقله إلى Toolbar
+                    
+                    VStack(spacing: 20) {
+                        // --- 2. شريط التقويم الأسبوعي ---
+                        VStack(spacing: 20) {
+                            HStack {
+                                Text("\(monthYearDisplay)")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.primaryText)
+                                
+                                Spacer()
+                                
+                                Button {
+                                    if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: manager.startOfWeek) {
+                                        manager.startOfWeek = newDate
+                                    }
+                                } label: {
+                                    Image(systemName: "chevron.left")
+                                        .font(.title2)
+                                        .foregroundColor(.accentOrange)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button {
+                                    if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: manager.startOfWeek) {
+                                        manager.startOfWeek = newDate
+                                    }
+                                } label: {
+                                    Image(systemName: "chevron.right")
+                                        .font(.title2)
+                                        .foregroundColor(.accentOrange)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.top, 5)
+                            
+                            // عرض الأيام
+                            HStack(spacing: 0) {
+                                ForEach(getWeekDays(), id: \.self) { date in
+                                    DateButton(manager: manager, date: date)
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                        }
+                        
+                        // 🔹 الخط الفاصل الرمادي الغامق (زي الصورة)
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color.gray.opacity(0.4))
+                            .padding(.horizontal, 10)
+                        
+                        // --- 3. Learning Topic ---
+                        Text("Learning Swift")
                             .font(.title3)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    Button { /* Action */ } label: {
-                        Image(systemName: "pencil.and.outline")
-                            .buttonStyle(.glassProminent)
-                            .font(.title2)
-                            .foregroundColor(.primaryText)
-                    }
-                }
-                .padding(.top, 20)
-                
-                // --- 2. شريط التقويم الأسبوعي (المنطقي) ---
-                VStack(spacing: 20) {
-                    HStack {
-                        // عنوان الشهر والسنة
-                        Text("\(monthYearDisplay) >") // عرض الشهر والسنة بناءً على بداية الأسبوع
-                            .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.primaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
-                        Spacer()
-                        
-                        // أزرار التنقل بين الأسابيع (الأسهم البرتقالية)
-                        Button {
-                            // منطق حقيقي: الانتقال إلى الأسبوع السابق
-                            if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: manager.startOfWeek) {
-                                manager.startOfWeek = newDate
-                            }
-                        } label: {
-                            Image(systemName: "chevron.left")
-                                .font(.title2)
-                                .foregroundColor(.accentOrange)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        Button {
-                            // منطق حقيقي: الانتقال إلى الأسبوع التالي
-                            if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: manager.startOfWeek) {
-                                manager.startOfWeek = newDate
-                            }
-                        } label: {
-                            Image(systemName: "chevron.right")
-                                .font(.title2)
-                                .foregroundColor(.accentOrange)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.top, 5)
-
-                    // عرض أيام الأسبوع والأرقام في شبكة (HStack)
-                    HStack(spacing: 0) {
-                        ForEach(getWeekDays(), id: \.self) { date in
-                            DateButton(manager: manager, date: date)
-                                .frame(maxWidth: .infinity) // توزيع متساوٍ بين الأيام
+                        // --- 4. Summary Cards ---
+                        HStack(spacing: 15) {
+                            SummaryCard(
+                                value: manager.daysLearned,
+                                label: "Days Learned",
+                                color: Color.accentOrange.opacity(0.8),
+                                icon: "flame.fill"
+                            )
+                            
+                            
+                            SummaryCard(
+                                value: manager.daysFreezed,
+                                label: "Day Freezed",
+                                color: Color.freezedCyan.opacity(0.7),
+                                icon: "cube.fill"
+                            )
+                            
                         }
                     }
-                }
-                
-                // 3. Learning Topic
-                Text("Learning Swift")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 10)
-                
-                // 4. Summary Cards (Days Learned & Day Freezed)
-                HStack(spacing: 10) {
-                    // Days Learned Card - بلون برتقالي داكن
-                    SummaryCard(
-                        value: manager.daysLearned, // بيانات حقيقية من Manager
-                        label: "Days Learned",
-                        color: Color.accentOrange.opacity(0.8),
-                        icon: "flame.fill"
+                    .padding(5)
+                    .background( // نفس البطاقة الداكنة اللي بالصورة
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.gray.opacity(0.10))
                     )
                     
-                    // Day Freezed Card - بلون سماوي داكن
-                    SummaryCard(
-                        value: manager.daysFreezed, // بيانات حقيقية من Manager
-                        label: "Day Freezed",
-                        color: Color.freezedCyan.opacity(0.7),
-                        icon: "cube.box"
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.gray, lineWidth: 2)
                     )
+                    
+                    
+                    // 5. Main Dynamic Button (الزر المركزي)
+                    MainActionButton(manager: manager)
+                        .padding(.vertical, 0)
+                    
+                    
+                    // 6. Secondary Action Button (Log as Freezed)
+                    Button(action: {
+                        // منطق حقيقي: تحديث حالة اليوم المختار إلى Freezed
+                        manager.updateStatus(to: .Freezed)
+                    }) {
+                        Text("Log as Freezed")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primaryText)
+                            .padding(.horizontal, 16) // توسع من اليمين واليسار
+                            .padding(.vertical, 8)    // توسع من الأعلى والأسفل
+                            .background(
+                                Capsule()
+                                    .fill(Color.freezedCyan)
+                                    .glassEffect(.clear.tint(Color.gray.opacity(15)))
+                            )
+                        
+                    }
+                    .buttonStyle(.plain)
+                    .shadow(color: Color.freezedCyan.opacity(0.4), radius: 40, x: 0, y: 0)
+                    
+                    // 7. Freezer Usage Text
+                    Text("1 out of 2 Freezes used") // تركها ثابتة كبيانات وهمية مؤقتًا
+                        .font(.caption)
+                        .foregroundColor(.secondaryText)
+                    
+                    Spacer() // لدفع المحتوى للأعلى
                 }
-                
-                // 5. Main Dynamic Button (الزر المركزي)
-                MainActionButton(manager: manager)
-                    .padding(.vertical, 30)
-                
-                // 6. Secondary Action Button (Log as Freezed)
-                Button(action: {
-                    // منطق حقيقي: تحديث حالة اليوم المختار إلى Freezed
-                    manager.updateStatus(to: .Freezed)
-                }) {
-                    Text("Log as Freezed")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primaryText)
-                        .background(
-                            Capsule()
-                                .stroke(Color.freezedCyan, lineWidth: 2) // حدود سماوية
-                        )
-                }
-                .buttonStyle(.plain)
-                .shadow(color: Color.freezedCyan.opacity(0.4), radius: 10, x: 0, y: 0)
-                
-                // 7. Freezer Usage Text
-                Text("1 out of 2 Freezes used") // تركها ثابتة كبيانات وهمية مؤقتًا
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
-                
-                Spacer() // لدفع المحتوى للأعلى
+                .padding(.horizontal, 0)
             }
-            .padding(.horizontal, 30)
+            // تمت إزالة navigationTitle واستبداله بعنصر في الـ Toolbar
+            .padding(.horizontal, 0)// تعديل العنوان ليكون واضحًا
+            .toolbar {
+                // العنوان في الوسط
+                ToolbarItem(placement: .principal) {
+                    Text("Activity")
+                
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primaryText)
+                }
+                // الأزرار في اليمين
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack {
+                        Button { /* Action */ } label: {
+                            Image(systemName: "calendar" )
+                                .padding()
+                                .font(.title3)
+                        }
+                        Button { /* Action */ } label: {
+                            Image(systemName: "pencil.and.outline")
+                                .buttonStyle(.glassProminent)
+                                .font(.title2)
+                                .padding()
+                        }
+                    }
+                }
+            }
         }
-        .navigationBarHidden(true)
     }
 }
 
 // MARK: - Preview
 struct SecondPage_Previews: PreviewProvider {
     static var previews: some View {
-        SecondPage()
+        SecondPage().preferredColorScheme(.dark)
     }
 }
