@@ -113,7 +113,8 @@ struct SummaryCard: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.title)
+                .font(.title2)
+                .padding(.leading, 5)
                 .foregroundColor(iconColor)
             
             VStack(alignment: .leading) {
@@ -131,8 +132,9 @@ struct SummaryCard: View {
         .padding(.vertical, 2)
         .padding(.horizontal, 2)
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 25).fill(color.opacity(0.4)))
+        .background(RoundedRectangle(cornerRadius: 45).fill(color.opacity(0.4)))
         .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
+
     }
 }
 
@@ -152,7 +154,7 @@ struct MainActionButton: View {
     var bgColor: Color {
         switch manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default {
         case .Default: return .accentOrange
-        case .Logged: return .LoggedColor
+        case .Logged: return Color.LoggedColor
         case .Freezed: return .FreezedColor
         }
     }
@@ -164,10 +166,13 @@ struct MainActionButton: View {
                 .fontWeight(.heavy)
                 .foregroundColor(.primaryText)
                 .frame(width: 250, height: 250)
+            
                 .background(
                     Circle()
                         .fill(bgColor)
-                        .shadow(color: bgColor.opacity(0.6), radius: 30, x: 0, y: 10)
+                        .shadow(color: Color.orange.opacity(0.3), radius: 5, x: 0, y: 0)
+                        .glassEffect(.clear)    // ✅ أضف تأثير الزجاج هنا
+
                 )
         }
         .buttonStyle(.plain)
@@ -267,10 +272,18 @@ struct WeekCalendarView: View {
                 ForEach(getWeekDays(), id: \.self) { date in
                     DateButton(manager: manager, date: date)
                         .frame(maxWidth: .infinity)
+
                 }
+
             }
+            Divider()
+                .frame(height: 0.5)
+                .background(Color.gray.opacity(0.2))
+                .padding(.horizontal, 10)
         }
+        
     }
+
 }
 
 // MARK: - Subview: Summary Cards
@@ -279,7 +292,7 @@ struct SummaryCardsView: View {
     @ObservedObject var manager: ActivityManager
     
     var body: some View {
-        HStack(spacing: 15) {
+        HStack(spacing: 10) {
             SummaryCard(
                 value: manager.daysLearned,
                 label: "Days Learned",
@@ -293,9 +306,10 @@ struct SummaryCardsView: View {
                 label: "Day Freezed",
                 color: Color.freezedCyan.opacity(0.7),
                 icon: "cube.fill",
-                iconColor: .FreezedColor
+                iconColor: .freezedCyan
             )
         }
+
     }
 }
 
@@ -346,35 +360,43 @@ struct SecondPage: View {
     var body: some View {
         ZStack {
             Color.primaryBackground.edgesIgnoringSafeArea(.all)
+
             VStack(spacing: 25) {
-                
+
                 VStack(spacing: 20) {
                     // --- Week Calendar ---
                     WeekCalendarView(manager: manager)
-                    
-                    // --- Summary Cards ---
-                    SummaryCardsView(manager: manager)
-                    
-                    // --- Learning Topic ---
-                    Text(learningTopic)   // ✅ التغيير: عرض الموضوع المختار من FirstPage
+
+                    // --- Learning Topic (Swift) ---
+                    Text(learningTopic)
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundColor(.primaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 5)
+
+                    
+                    // --- Summary Cards ---
+                    SummaryCardsView(manager: manager)
+
                 }
                 .padding(20)
                 .background(
                     RoundedRectangle(cornerRadius: 40)
                         .fill(Color.gray.opacity(0.10))
+
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 40)
                         .stroke(Color.gray, lineWidth: 2)
+
+
                 )
+
 
                 
                 MainActionButton(manager: manager)
-                
+
                 SecondaryActionButtonView(manager: manager, maxFreezes: maxFreezes)   // ✅ التغيير: تمرير maxFreezes
                 
                 Text("\(manager.daysFreezed) out of \(maxFreezes) Freezes used")

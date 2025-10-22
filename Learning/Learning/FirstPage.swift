@@ -16,7 +16,8 @@ struct DurationButton: View {
                 .fontWeight(.semibold)
                 .foregroundColor(isSelected ? .primaryText : .secondaryText)
                 .padding(.horizontal, 20)
-                .frame(height: 48)
+                .frame(height: 58)
+                .glassEffect(.clear)
                 .background(
                     Group {
                         if isSelected {
@@ -24,6 +25,8 @@ struct DurationButton: View {
                                 .fill(Color.accentOrange)
                         }
                     }
+                        .glassEffect(.clear).frame(height: 58)
+
                 )
         }
         .buttonStyle(.plain)
@@ -48,21 +51,35 @@ struct FirstPage: View {
                 Color.primaryBackground
                     .edgesIgnoringSafeArea(.all)
 
-                VStack(alignment: .leading, spacing: 30) {
+
+                VStack(alignment: .leading, spacing: 50) {
 
                     // Logo/Icon
                     HStack {
                         Spacer()
-                        Image("logoFirstScreen")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 250, height: 250)
-                            .padding(.top)
+                        
+                        ZStack {
+                            // 1. الدائرة الداكنة
+                            Circle()
+                                .fill(Color(red: 0.15, green: 0.05, blue: 0.05))
+                                .shadow(color: Color.orange.opacity(0.3), radius: 5, x: 0, y: 0)
+                                .glassEffect(.clear)
+                            // 2. الشعار (SF Symbol)
+                            Image(systemName: "flame.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.2))
+                        }
+                        .frame(width: 109, height: 109) // حجم الإطار العام للدائرة
+                        .background(Color.black)       // خلفية سوداء
+                        .padding(.top)
                         Spacer()
                     }
 
+
                     // Header Text
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text("Hello Learner")
                             .font(.largeTitle)
                             .fontWeight(.bold)
@@ -74,7 +91,7 @@ struct FirstPage: View {
                     }
 
                     // Learning Topic Input
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
                         HStack(spacing: 0) {
                             Color.inputBarColor
                                 .frame(width: 4, height: 20)
@@ -106,6 +123,7 @@ struct FirstPage: View {
                                 DurationButton(
                                     duration: duration,
                                     selectedDuration: $selectedDuration
+
                                 )
                             }
                             Spacer()
@@ -126,6 +144,7 @@ struct FirstPage: View {
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primaryText)
                                 .frame(width: 250, height: 48)
+                                .glassEffect(.clear)
                                 .background(Color.accentOrange)
                                 .clipShape(Capsule())
                         }

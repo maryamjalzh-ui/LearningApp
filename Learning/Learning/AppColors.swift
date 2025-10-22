@@ -37,7 +37,7 @@ extension Color {
     // اللون البرتقالي المميز (FF9230) - يستخدم لحالة "Learned"
     static let accentOrange = Color(hex: "#FF9230")
     // اللون البني الغامق لما تضغط لوق
-    static let LoggedColor = Color(hex: "#613814")
+    static let LoggedColor = Color(hex: "#260D0D")
     // اللون الاسود لما ينضغط فريز
     static let FreezedColor = Color(hex: "#005359")
 
@@ -57,7 +57,8 @@ extension Color {
 
     // لون شريط الإدخال أو الشريط الجانبي (كان أخضر/رمادي)
     static let inputBarColor = Color(red: 0.05, green: 0.4, blue: 0.05) // لون داكن
-    
+
     // تقدير لون التوهج/الظل الخفيف للزر الرئيسي
     static let buttonGlow = Color.accentOrange.opacity(0.4)
+
 }
