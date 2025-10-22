@@ -171,7 +171,7 @@ struct SummaryCard: View {
     let icon: String
 
     var body: some View {
-        HStack(spacing: 15) {
+        HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.title)
                 .foregroundColor(.primaryText)
@@ -193,7 +193,7 @@ struct SummaryCard: View {
         .padding(.horizontal, 2)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 30)
+            RoundedRectangle(cornerRadius: 25)
                 .fill(color.opacity(0.4))
         )
         .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -236,12 +236,14 @@ struct MainActionButton: View {
                     Circle()
                         .fill(bgColor)
                         .shadow(color: bgColor.opacity(0.6), radius: 10, x: 0, y: 10)
-                        .glassEffect(.clear.tint(Color.gray.opacity(150)))
-            
+                        // ملاحظة: glassEffect غير معرّف لدينا في المشروع بحسب البحث.
+                        // إذا لديك موديفاير مخصص له، أضفه هنا. وإلا يمكن تركه بدون.
                 )
             
         }
-        .buttonStyle(.glass)
+        // ملاحظة: .buttonStyle(.glass) غير معرّف لدينا في المشروع بحسب البحث.
+        // إن كان لديك ستايل مخصص بنفس الاسم، أعده. وإلا استخدم .buttonStyle(.plain) أو عرف ستايل موحد.
+        .buttonStyle(.plain)
     }
 }
 
@@ -270,165 +272,209 @@ struct SecondPage: View {
         return formatter.string(from: manager.startOfWeek).capitalized
     }
     
+    // MARK: Popover state + temp date
+    @State private var isShowingDatePicker = false
+    @State private var tempDate = Date()
+    
     var body: some View {
-        NavigationStack{
-            ZStack {
-                Color.primaryBackground
-                    .edgesIgnoringSafeArea(.all)
+        ZStack {
+            Color.primaryBackground
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 25) {
                 
-                VStack(spacing: 25) {
-                    
-                    // 1. شريط التنقل المخصص (Header) - تمت إزالته من هنا ونقله إلى Toolbar
-                    
+                VStack(spacing: 20) {
+                    // --- 2. شريط التقويم الأسبوعي ---
                     VStack(spacing: 20) {
-                        // --- 2. شريط التقويم الأسبوعي ---
-                        VStack(spacing: 20) {
-                            HStack {
-                                Text("\(monthYearDisplay)")
+                        HStack {
+                            Text("\(monthYearDisplay)")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primaryText)
+                            
+                            // زر السهم لفتح الـ Popover
+                            Button {
+                                // عيّني التاريخ المؤقت للحالي قبل الفتح
+                                tempDate = manager.selectedDate
+                                isShowingDatePicker = true
+                            } label: {
+                                Image(systemName: "chevron.right")
+                                    .font(.title3)
+                                    .foregroundColor(.accentOrange)
+                            }
+                            .buttonStyle(.plain)
+                            // Popover مع DatePicker Wheel
+                            .popover(isPresented: $isShowingDatePicker) {
+                                VStack(spacing: 16) {
+                                    DatePicker(
+                                        "",
+                                        selection: $tempDate,
+                                        displayedComponents: [.date]
+                                    )
+                                    .datePickerStyle(.wheel)
+                                    .labelsHidden()
+                                    
+                                    Button {
+                                        // ثبّت الاختيار: حدّث selectedDate و startOfWeek
+                                        manager.selectedDate = tempDate
+                                        if let newStart = tempDate.startOfWeek {
+                                            manager.startOfWeek = newStart
+                                        }
+                                        isShowingDatePicker = false
+                                    } label: {
+                                        Text("Done")
+                                            .font(.headline)
+                                            .foregroundColor(.primaryText)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                Capsule().fill(Color.accentOrange)
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding()
+                                // إجبار الـ popover فقط على المظهر الداكن ليصبح الـ wheel أسود
+                                .preferredColorScheme(.dark)
+                                .presentationDetents([.fraction(0.35)])
+                            }
+                            
+                            Spacer()
+                            
+                            Button {
+                                if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: manager.startOfWeek) {
+                                    manager.startOfWeek = newDate
+                                }
+                            } label: {
+                                Image(systemName: "chevron.left")
                                     .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.primaryText)
-                                
-                                Spacer()
-                                
-                                Button {
-                                    if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: manager.startOfWeek) {
-                                        manager.startOfWeek = newDate
-                                    }
-                                } label: {
-                                    Image(systemName: "chevron.left")
-                                        .font(.title2)
-                                        .foregroundColor(.accentOrange)
-                                }
-                                .buttonStyle(.plain)
-                                
-                                Button {
-                                    if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: manager.startOfWeek) {
-                                        manager.startOfWeek = newDate
-                                    }
-                                } label: {
-                                    Image(systemName: "chevron.right")
-                                        .font(.title2)
-                                        .foregroundColor(.accentOrange)
-                                }
-                                .buttonStyle(.plain)
+                                    .foregroundColor(.accentOrange)
                             }
-                            .padding(.top, 5)
+                            .buttonStyle(.plain)
                             
-                            // عرض الأيام
-                            HStack(spacing: 0) {
-                                ForEach(getWeekDays(), id: \.self) { date in
-                                    DateButton(manager: manager, date: date)
-                                        .frame(maxWidth: .infinity)
+                            Button {
+                                if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: manager.startOfWeek) {
+                                    manager.startOfWeek = newDate
                                 }
+                            } label: {
+                                Image(systemName: "chevron.right")
+                                    .font(.title2)
+                                    .foregroundColor(.accentOrange)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.top, 5)
+                        
+                        // عرض الأيام
+                        HStack(spacing: 0) {
+                            ForEach(getWeekDays(), id: \.self) { date in
+                                DateButton(manager: manager, date: date)
+                                    .frame(maxWidth: .infinity)
                             }
                         }
-                        
-                        // 🔹 الخط الفاصل الرمادي الغامق (زي الصورة)
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color.gray.opacity(0.4))
-                            .padding(.horizontal, 10)
-                        
-                        // --- 3. Learning Topic ---
-                        Text("Learning Swift")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primaryText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // --- 4. Summary Cards ---
-                        HStack(spacing: 15) {
-                            SummaryCard(
-                                value: manager.daysLearned,
-                                label: "Days Learned",
-                                color: Color.accentOrange.opacity(0.8),
-                                icon: "flame.fill"
-                            )
-                            
-                            
-                            SummaryCard(
-                                value: manager.daysFreezed,
-                                label: "Day Freezed",
-                                color: Color.freezedCyan.opacity(0.7),
-                                icon: "cube.fill"
-                            )
-                            
-                        }
                     }
-                    .padding(5)
-                    .background( // نفس البطاقة الداكنة اللي بالصورة
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.gray.opacity(0.10))
-                    )
                     
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.gray, lineWidth: 2)
-                    )
+                    // 🔹 الخط الفاصل الرمادي الغامق (زي الصورة)
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color.gray.opacity(0.4))
+                        .padding(.horizontal, 10)
                     
-                    
-                    // 5. Main Dynamic Button (الزر المركزي)
-                    MainActionButton(manager: manager)
-                        .padding(.vertical, 0)
-                    
-                    
-                    // 6. Secondary Action Button (Log as Freezed)
-                    Button(action: {
-                        // منطق حقيقي: تحديث حالة اليوم المختار إلى Freezed
-                        manager.updateStatus(to: .Freezed)
-                    }) {
-                        Text("Log as Freezed")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primaryText)
-                            .padding(.horizontal, 16) // توسع من اليمين واليسار
-                            .padding(.vertical, 8)    // توسع من الأعلى والأسفل
-                            .background(
-                                Capsule()
-                                    .fill(Color.freezedCyan)
-                                    .glassEffect(.clear.tint(Color.gray.opacity(15)))
-                            )
-                        
-                    }
-                    .buttonStyle(.plain)
-                    .shadow(color: Color.freezedCyan.opacity(0.4), radius: 40, x: 0, y: 0)
-                    
-                    // 7. Freezer Usage Text
-                    Text("1 out of 2 Freezes used") // تركها ثابتة كبيانات وهمية مؤقتًا
-                        .font(.caption)
-                        .foregroundColor(.secondaryText)
-                    
-                    Spacer() // لدفع المحتوى للأعلى
-                }
-                .padding(.horizontal, 0)
-            }
-            // تمت إزالة navigationTitle واستبداله بعنصر في الـ Toolbar
-            .padding(.horizontal, 0)// تعديل العنوان ليكون واضحًا
-            .toolbar {
-                // العنوان في الوسط
-                ToolbarItem(placement: .principal) {
-                    Text("Activity")
-                
-                        .font(.title)
+                    // --- 3. Learning Topic ---
+                    Text("Learning Swift")
+                        .font(.title3)
                         .fontWeight(.bold)
                         .foregroundColor(.primaryText)
-                }
-                // الأزرار في اليمين
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack {
-                        Button { /* Action */ } label: {
-                            Image(systemName: "calendar" )
-                                .padding()
-                                .font(.title3)
-                        }
-                        Button { /* Action */ } label: {
-                            Image(systemName: "pencil.and.outline")
-                                .buttonStyle(.glassProminent)
-                                .font(.title2)
-                                .padding()
-                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // --- 4. Summary Cards ---
+                    HStack(spacing: 15) {
+                        SummaryCard(
+                            value: manager.daysLearned,
+                            label: "Days Learned",
+                            color: Color.accentOrange.opacity(0.8),
+                            icon: "flame.fill"
+                        )
+                        
+                        
+                        SummaryCard(
+                            value: manager.daysFreezed,
+                            label: "Day Freezed",
+                            color: Color.freezedCyan.opacity(0.7),
+                            icon: "cube.fill"
+                        )
+                        
                     }
+                }
+                .padding(5)
+                .background( // نفس البطاقة الداكنة اللي بالصورة
+                    RoundedRectangle(cornerRadius: 40)
+                        .fill(Color.gray.opacity(0.10))
+                )
+                
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.gray, lineWidth: 2)
+                )
+                
+                
+                // 5. Main Dynamic Button (الزر المركزي)
+                MainActionButton(manager: manager)
+                    .padding(.vertical, 0)
+                
+                
+                // 6. Secondary Action Button (Log as Freezed)
+                Button(action: {
+                    // منطق حقيقي: تحديث حالة اليوم المختار إلى Freezed
+                    manager.updateStatus(to: .Freezed)
+                }) {
+                    Text("Log as Freezed")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primaryText)
+                        .padding(.horizontal, 16) // توسع من اليمين واليسار
+                        .padding(.vertical, 8)    // توسع من الأعلى والأسفل
+                        .background(
+                            Capsule()
+                                .fill(Color.freezedCyan)
+                                // glassEffect غير معرف لدينا. إن كان لديك، أعده هنا.
+                        )
+                    
+                }
+                .buttonStyle(.plain)
+                .shadow(color: Color.freezedCyan.opacity(0.4), radius: 40, x: 0, y: 0)
+                
+                // 7. Freezer Usage Text
+                Text("1 out of 2 Freezes used") // تركها ثابتة كبيانات وهمية مؤقتًا
+                    .font(.caption)
+                    .foregroundColor(.secondaryText)
+                
+            }
+            .padding(.horizontal, 30) // لمطابقة FirstPage
+        }
+        // توحيد لون التينت/الروابط مع FirstPage
+        .tint(.accentOrange)
+        .toolbar {
+            // العنوان في الوسط
+            ToolbarItem(placement: .principal) {
+                Text("Activity")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primaryText)
+            }
+            // الأزرار في اليمين: كل زر كعنصر مستقل
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink(destination: AllActivity()) {
+                    Image(systemName: "calendar")
+                        .font(.title3)
+                        .padding()
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink(destination: LearningGoal()) {
+                    Image(systemName: "pencil.and.outline")
+                        .font(.title2)
+                        .padding()
                 }
             }
         }
@@ -438,6 +484,10 @@ struct SecondPage: View {
 // MARK: - Preview
 struct SecondPage_Previews: PreviewProvider {
     static var previews: some View {
-        SecondPage().preferredColorScheme(.dark)
+        // لف SecondPage داخل NavigationStack لعرض الـ Toolbar في الكانفس
+        NavigationStack {
+            SecondPage()
+        }
+        .preferredColorScheme(.dark)
     }
 }

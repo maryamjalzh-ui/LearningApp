@@ -19,7 +19,7 @@ struct DurationButton: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(isSelected ? .primaryText : .secondaryText)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 10)
                 // تحديد الارتفاع الثابت 48 نقطة
                 .frame(height: 48)
                 .background(
@@ -88,7 +88,7 @@ struct FirstPage: View {
                             .padding(.top)
                         Spacer()
                     }
-                    .padding(.bottom, -50)
+                    .padding(-50)
 
                     // 2. Header Text
                     VStack(alignment: .leading, spacing: 5) {
@@ -159,9 +159,7 @@ struct FirstPage: View {
                                 .background(Color.accentOrange)
                                 .clipShape(Capsule()) // زوايا دائرية بالكامل
                         }
-                        .buttonStyle(.plain) // لضمان تطبيق الستايل المخصص على NavigationLink
-                        .shadow(color: Color.buttonGlow, radius: 10, x: 0, y: 0) // توهج
-                        .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3) // ظل
+                        .buttonStyle(.plain) // لضمان تطبيق الستايل المخصص على 
                         
                         Spacer() // 👈 لدفعه إلى المنتصف
                     }
