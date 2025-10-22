@@ -36,7 +36,11 @@ extension Color {
     
     // اللون البرتقالي المميز (FF9230) - يستخدم لحالة "Learned"
     static let accentOrange = Color(hex: "#FF9230")
-    
+    // اللون البني الغامق لما تضغط لوق
+    static let LoggedColor = Color(hex: "#613814")
+    // اللون الاسود لما ينضغط فريز
+    static let FreezedColor = Color(hex: "#005359")
+
     // اللون السماوي الجديد لحالة "Freezed" (0, 210, 224)
     static let freezedCyan = Color(red: 0/255, green: 210/255, blue: 224/255)
     

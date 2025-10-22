@@ -30,23 +30,7 @@ struct DurationButton: View {
                             Capsule() // شكل بيضاوي لزوايا دائرية كاملة (Smooth Corners 50)
                                 .fill(Color.accentOrange)
                         } else {
-                            // الزر غير المختار: تطبيق ستايل Glass/Liquid من CSS
-                            ZStack {
-                                Capsule()
-                                    // تطبيق التدرج اللوني: linear-gradient( rgba(0, 0, 0, 0.4) , rgba(26, 26, 26, 1) )
-                                    .fill(LinearGradient(
-                                        colors: [Color.black.opacity(0.4), Color.darkGradientEnd],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ))
-                                    // تطبيق الضبابية: filter: blur( 6px ) على الخلفية فقط
-                                    .blur(radius: 6)
-
-                                // محاكاة الظلال/الحدود الداخلية (Inset Shadows)
-                                Capsule()
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 0.5) // محاكاة الإضاءة العلوية
-                                    .shadow(color: Color.black.opacity(0.8), radius: 2, x: 0, y: 1) // محاكاة الظل السفلي
-                            }
+                         
                         }
                     }
                 )

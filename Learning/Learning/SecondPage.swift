@@ -142,7 +142,7 @@ struct DateButton: View {
                         Group {
                             if isSelected {
                                 Circle()
-                                    .fill(selectedBgColor.opacity(status == .Default ? 0.3 : 1.0))
+                                    .fill(Color.gray.opacity(40))
                                 // لون خفيف إذا كان مختارًا و Default
                             } else {
                                 // تلوين الأيام التي تم تسجيلها أو تجميدها حتى لو لم تكن مختارة
@@ -216,8 +216,8 @@ struct MainActionButton: View {
     var bgColor: Color {
         switch manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default {
         case .Default: return .accentOrange
-        case .Logged: return .accentOrange
-        case .Freezed: return .freezedCyan
+        case .Logged: return .LoggedColor
+        case .Freezed: return .FreezedColor
             
         }
     }
@@ -235,7 +235,8 @@ struct MainActionButton: View {
                 .background(
                     Circle()
                         .fill(bgColor)
-                        .shadow(color: bgColor.opacity(0.6), radius: 10, x: 0, y: 10)
+                    
+                        .shadow(color: bgColor.opacity(0.6), radius: 30, x: 0, y: 10)
                         // ملاحظة: glassEffect غير معرّف لدينا في المشروع بحسب البحث.
                         // إذا لديك موديفاير مخصص له، أضفه هنا. وإلا يمكن تركه بدون.
                 )
