@@ -1,15 +1,11 @@
 import SwiftUI
 
-// ملاحظة: تم حذف جميع تعريفات الألوان ومساعد Hex Color لتوحيدها في AppColors.swift
-
-// MARK: - Duration Button Component (مطابقة الأبعاد 48 والزوايا الدائرية)
+// MARK: - Duration Button Component
 struct DurationButton: View {
     let duration: FirstPage.Duration
     @Binding var selectedDuration: FirstPage.Duration
 
-    var isSelected: Bool {
-        duration == selectedDuration
-    }
+    var isSelected: Bool { duration == selectedDuration }
 
     var body: some View {
         Button(action: {
@@ -20,17 +16,12 @@ struct DurationButton: View {
                 .fontWeight(.semibold)
                 .foregroundColor(isSelected ? .primaryText : .secondaryText)
                 .padding(.horizontal, 20)
-                // تحديد الارتفاع الثابت 48 نقطة
                 .frame(height: 48)
                 .background(
-                    // التعديل هنا لتطبيق ستايل CSS المعقد
                     Group {
                         if isSelected {
-                            // الزر المختار: لون برتقالي صلب
-                            Capsule() // شكل بيضاوي لزوايا دائرية كاملة (Smooth Corners 50)
+                            Capsule()
                                 .fill(Color.accentOrange)
-                        } else {
-                         
                         }
                     }
                 )
@@ -40,7 +31,6 @@ struct DurationButton: View {
 }
 
 // MARK: - Main View: FirstPage
-
 struct FirstPage: View {
 
     enum Duration: String, CaseIterable {
@@ -53,7 +43,6 @@ struct FirstPage: View {
     @State private var selectedDuration: Duration = .week
 
     var body: some View {
-        // 🌟 تمت إضافة NavigationStack لتمكين التنقل
         NavigationStack {
             ZStack {
                 Color.primaryBackground
@@ -61,21 +50,18 @@ struct FirstPage: View {
 
                 VStack(alignment: .leading, spacing: 30) {
 
-                    // 1. Logo/Icon (تم حذف الدائرة الخلفية وتكبير حجم الصورة لتأخذ مكان الدائرة)
+                    // Logo/Icon
                     HStack {
                         Spacer()
-                        // 🚨 استخدام الصورة مباشرة وتحديد حجمها
-                        Image("logoFirstScreen") // اسم الصورة في Assets
+                        Image("logoFirstScreen")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 250, height: 250) // الحجم الجديد
+                            .frame(width: 250, height: 250)
                             .padding(.top)
-                        
                         Spacer()
                     }
-//                    .padding(-50)
 
-                    // 2. Header Text
+                    // Header Text
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Hello Learner")
                             .font(.largeTitle)
@@ -87,10 +73,9 @@ struct FirstPage: View {
                             .foregroundColor(.secondaryText)
                     }
 
-                    // 3. Learning Topic Input
+                    // Learning Topic Input
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 0) {
-                            // استخدام اللون الموحد الآن
                             Color.inputBarColor
                                 .frame(width: 4, height: 20)
                                 .cornerRadius(2)
@@ -110,7 +95,7 @@ struct FirstPage: View {
                             .background(Color.secondaryText)
                     }
 
-                    // 4. Duration Selection (الأزرار المنفصلة)
+                    // Duration Selection
                     VStack(alignment: .leading, spacing: 15) {
                         Text("I want to learn it in a")
                             .font(.body)
@@ -129,27 +114,25 @@ struct FirstPage: View {
 
                     Spacer()
 
-                    // 5. Start Learning Button (الزر الرئيسي)
-                    HStack { // 👈 تم إضافة HStack لتوسيط الزر
-                        Spacer() // 👈 لدفعه إلى المنتصف
-                        
-                        // 🌟 تم استبدال Button بـ NavigationLink للانتقال إلى SecondPage
-                        NavigationLink(destination: SecondPage()) {
-                            Text("Start learning") //
+                    // Start Learning Button
+                    HStack {
+                        Spacer()
+                        NavigationLink(destination: SecondPage(
+                            learningTopic: learningTopic,
+                            selectedDuration: selectedDuration
+                        )) {
+                            Text("Start learning")
                                 .font(.headline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primaryText)
-                                // 💡 تم تصغير الزر بتحديد عرض ثابت
                                 .frame(width: 250, height: 48)
                                 .background(Color.accentOrange)
-                                .clipShape(Capsule()) // زوايا دائرية بالكامل
+                                .clipShape(Capsule())
                         }
-                        .buttonStyle(.plain) // لضمان تطبيق الستايل المخصص على 
-                        
-                        Spacer() // 👈 لدفعه إلى المنتصف
+                        .buttonStyle(.plain)
+                        Spacer()
                     }
                     .padding(.bottom, 20)
-
                 }
                 .padding(.horizontal, 30)
             }

@@ -13,14 +13,7 @@ class ActivityManager: ObservableObject {
     @Published var startOfWeek: Date
     @Published var selectedDate: Date
     @Published var dailyStatus: [Date: ActivityStatus]
-    
-    // Freezes counters
-    @Published var weeklyFreezesUsed: Int = 0
-    @Published var monthlyFreezesUsed: Int = 0
-    @Published var yearlyFreezesUsed: Int = 0
-    
-    private var timer: AnyCancellable?
-    
+
     init() {
         let today = Date().startOfDay!
         let weekStart = today.startOfWeek!
@@ -28,20 +21,10 @@ class ActivityManager: ObservableObject {
         self.startOfWeek = weekStart
         self.selectedDate = today
         self.dailyStatus = [:]
+      
         
-        let yesterday = today.dayBefore!
-        let tomorrow = today.dayAfter!
-        
-        self.dailyStatus = [
-            today: .Logged,
-            yesterday: .Logged,
-            tomorrow: .Freezed
-        ]
-        
-        startMidnightTimer()
     }
     
-    // MARK: - Computed Properties
     var daysLearned: Int {
         dailyStatus.values.filter { $0 == .Logged }.count
     }
@@ -49,39 +32,9 @@ class ActivityManager: ObservableObject {
     var daysFreezed: Int {
         dailyStatus.values.filter { $0 == .Freezed }.count
     }
-    
-    // MARK: - Update Status
+
     func updateStatus(to status: ActivityStatus) {
         dailyStatus[selectedDate.startOfDay!] = status
-    }
-    
-    // MARK: - Freezes Logic
-    func canUseFreeze() -> Bool {
-        let weeklyLimit = 2
-        return weeklyFreezesUsed < weeklyLimit && dailyStatus[selectedDate.startOfDay!] != .Logged
-    }
-    
-    func useFreeze() {
-        guard canUseFreeze() else { return }
-        dailyStatus[selectedDate.startOfDay!] = .Freezed
-        weeklyFreezesUsed += 1
-        monthlyFreezesUsed += 1
-        yearlyFreezesUsed += 1
-    }
-    
-    // MARK: - Midnight Reset Timer
-    private func startMidnightTimer() {
-        let calendar = Calendar.current
-        let now = Date()
-        let nextMidnight = calendar.nextDate(after: now, matching: DateComponents(hour:0, minute:0, second:0), matchingPolicy: .nextTime)!
-        let interval = nextMidnight.timeIntervalSince(now)
-        
-        timer = Timer.publish(every: interval, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-                self?.startMidnightTimer() // restart timer for next day
-            }
     }
 }
 
@@ -329,7 +282,7 @@ struct SummaryCardsView: View {
         HStack(spacing: 15) {
             SummaryCard(
                 value: manager.daysLearned,
-                label: manager.daysLearned == 1 ? "Day Learned" : "Days Learned",
+                label: "Days Learned",
                 color: Color.accentOrange.opacity(0.8),
                 icon: "flame.fill",
                 iconColor: .accentOrange
@@ -337,7 +290,7 @@ struct SummaryCardsView: View {
             
             SummaryCard(
                 value: manager.daysFreezed,
-                label: manager.daysFreezed == 1 ? "Day Freezed" : "Days Freezed",
+                label: "Day Freezed",
                 color: Color.freezedCyan.opacity(0.7),
                 icon: "cube.fill",
                 iconColor: .FreezedColor
@@ -350,9 +303,14 @@ struct SummaryCardsView: View {
 
 struct SecondaryActionButtonView: View {
     @ObservedObject var manager: ActivityManager
-    
+    let maxFreezes: Int   // ✅ التغيير: تمرير أقصى عدد Freezes من SecondPage
+
+    var isDisabled: Bool {   // ✅ التغيير: الزر يتوقف إذا وصل المستخدم الحد أو اليوم مسجل
+        manager.daysFreezed >= maxFreezes || manager.dailyStatus[manager.selectedDate.startOfDay!] == .Logged
+    }
+
     var body: some View {
-        Button(action: { manager.useFreeze() }) {
+        Button(action: { manager.updateStatus(to: .Freezed) }) {
             Text("Log as Freezed")
                 .font(.headline)
                 .fontWeight(.semibold)
@@ -363,14 +321,27 @@ struct SecondaryActionButtonView: View {
         }
         .buttonStyle(.plain)
         .shadow(color: Color.freezedCyan.opacity(0.4), radius: 40, x: 0, y: 0)
-        .disabled(!manager.canUseFreeze())
+        .disabled(isDisabled)  // ✅ التغيير
     }
 }
 
-// MARK: - Main View
+// MARK: - Main View: SecondPage
 
 struct SecondPage: View {
     @StateObject private var manager = ActivityManager()
+    
+    // ✅ التغييرات: استقبال البيانات من FirstPage
+    var learningTopic: String
+    var selectedDuration: FirstPage.Duration
+    
+    // ✅ التغيير: حساب أقصى Freezes حسب Duration
+    var maxFreezes: Int {
+        switch selectedDuration {
+        case .week: return 2
+        case .month: return 8
+        case .year: return 96
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -385,7 +356,7 @@ struct SecondPage: View {
                     SummaryCardsView(manager: manager)
                     
                     // --- Learning Topic ---
-                    Text("Learning Swift")
+                    Text(learningTopic)   // ✅ التغيير: عرض الموضوع المختار من FirstPage
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundColor(.primaryText)
@@ -404,11 +375,12 @@ struct SecondPage: View {
                 
                 MainActionButton(manager: manager)
                 
-                SecondaryActionButtonView(manager: manager)
+                SecondaryActionButtonView(manager: manager, maxFreezes: maxFreezes)   // ✅ التغيير: تمرير maxFreezes
                 
-                Text("1 out of 2 Freezes used")
+                Text("\(manager.daysFreezed) out of \(maxFreezes) Freezes used")
                     .font(.caption)
                     .foregroundColor(.secondaryText)
+
             }
             .padding(.horizontal, 30)
         }
@@ -444,7 +416,10 @@ struct SecondPage: View {
 
 struct SecondPage_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationStack { SecondPage() }
-            .preferredColorScheme(.dark)
+        NavigationStack {
+            SecondPage(learningTopic: "Swift", selectedDuration: .week)
+        }
+        .preferredColorScheme(.dark)
     }
 }
+
