@@ -383,12 +383,11 @@ struct SecondPage: View {
                 .padding(20)
                 .background(
                     RoundedRectangle(cornerRadius: 40)
-                        .fill(Color.gray.opacity(0.10))
-
+                        .fill(Color.darkGreyBackground.opacity(0.3))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 40)
-                        .stroke(Color.gray, lineWidth: 2)
+                        .stroke(Color.gray, lineWidth: 0.3)
 
 
                 )
