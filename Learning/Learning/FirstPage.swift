@@ -62,6 +62,7 @@ struct FirstPage: View {
                             // 1. الدائرة الداكنة
                             Circle()
                                 .fill(Color(red: 0.15, green: 0.05, blue: 0.05))
+
                                 .shadow(color: Color.orange.opacity(0.3), radius: 5, x: 0, y: 0)
                                 .glassEffect(.clear)
                             // 2. الشعار (SF Symbol)
