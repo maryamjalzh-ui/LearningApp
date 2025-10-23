@@ -15,4 +15,7 @@ struct LearningGoal: View {
 
 #Preview {
     LearningGoal()
+        .preferredColorScheme(.dark) // الوضع الليلي
+
 }
+

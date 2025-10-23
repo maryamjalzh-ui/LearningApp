@@ -9,14 +9,14 @@ extension Calendar {
         let range = self.range(of: .day, in: .month, for: date)!
         let numDays = range.count
 
-        // يوم الأسبوع لأول يوم بالشهر (1 = الأحد حسب Calendar)
+        // يوم الأسبوع لأول يوم بالشهر
         let weekdayOfFirst = self.component(.weekday, from: firstOfMonth)
 
         var dates: [Date] = []
 
         // أيام فارغة قبل أول يوم الشهر
         for _ in 1..<weekdayOfFirst {
-            dates.append(Date.distantPast) // خلية فارغة
+            dates.append(Date.distantPast)
         }
 
         // الأيام الفعلية
@@ -26,16 +26,16 @@ extension Calendar {
             }
         }
 
-        // أكمل الشبكة لتصبح 42 خلية (7x6)
+        // أكمل الشبكة إلى 42 خلية (7x6)
         while dates.count % 7 != 0 || dates.count < 42 {
-            dates.append(Date.distantFuture) // خلية فارغة بعد الشهر
+            dates.append(Date.distantFuture)
         }
 
         return dates
     }
 }
 
-// === 2. WeekHeaderView مع 3 أحرف لكل يوم ===
+// === 2. WeekHeaderView (3 أحرف لكل يوم) ===
 struct WeekHeaderView: View {
     @Environment(\.calendar) var calendar
 
@@ -51,17 +51,18 @@ struct WeekHeaderView: View {
         }
         .padding(.horizontal)
         .padding(.bottom, 5)
-        
     }
 }
 
-// === 3. DayCell ===
+// === 3. DayCell (ألوان الأيام من ActivityManager) ===
 struct DayCell: View {
     let date: Date
     let calendar: Calendar
     let isCurrentMonth: Bool
+    @EnvironmentObject var manager: ActivityManager
 
     var isToday: Bool { calendar.isDateInToday(date) }
+    var status: ActivityStatus { manager.dailyStatus[date.startOfDay!] ?? .Default }
 
     var body: some View {
         VStack {
@@ -72,20 +73,27 @@ struct DayCell: View {
                     .foregroundColor(isCurrentMonth ? (isToday ? .white : .primary) : .secondary)
                     .frame(width: 35, height: 35)
                     .background {
-                        if isToday {
-                            Circle().fill(.orange)
-                                .frame(width: 35, height: 35)
+                        switch status {
+                        case .Logged:
+                            Circle().fill(Color.orange.opacity(0.7))
+                        case .Freezed:
+                            Circle().fill(Color.cyan.opacity(0.7))
+                        case .Default:
+                            if isToday {
+                                Circle().fill(Color.orange)
+                            } else {
+                                Color.clear
+                            }
                         }
                     }
             } else {
-                Text("") // خلية فارغة
-                    .frame(width: 35, height: 35)
+                Text("").frame(width: 35, height: 35)
             }
         }
     }
 }
 
-// === 4. MonthView مع WeekHeader لكل شهر ===
+// === 4. MonthView ===
 struct MonthView: View {
     @Environment(\.calendar) var calendar
     let month: Date
@@ -101,10 +109,11 @@ struct MonthView: View {
             // عنوان الشهر
             Text(dateFormatter.string(from: month).capitalized)
                 .font(.title2.bold())
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading)
 
-            // رأس أيام الأسبوع داخل كل شهر
+            // رأس أيام الأسبوع
             WeekHeaderView()
 
             // شبكة الأيام
@@ -118,18 +127,15 @@ struct MonthView: View {
                 }
             }
             .padding(.horizontal)
-
-            
         }
         .padding(.bottom, 20)
-
     }
 }
 
-// === 5. FullScreenCalendarView مع تمرير للشهر الحالي في الوسط ===
+// === 5. FullScreenCalendarView ===
 struct FullScreenCalendarView: View {
     @Environment(\.calendar) var calendar
-    let monthsRange = -0...12 // 9 أشهر قبل وبعد
+    let monthsRange = -0...12 // نطاق الأشهر المعروضة
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -144,16 +150,28 @@ struct FullScreenCalendarView: View {
                 }
                 .padding(.top, 10)
             }
+            .background(Color(.systemBackground).ignoresSafeArea())
+            .onAppear {
+                if let todayMonth = calendar.date(byAdding: .month, value: 0, to: Date()) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.easeInOut) {
+                            proxy.scrollTo(todayMonth, anchor: .center)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-// === 6. Main View ===
+// === 6. Main AllActivity View ===
 struct AllActivity: View {
+    @EnvironmentObject var manager: ActivityManager
+
     var body: some View {
         NavigationView {
             FullScreenCalendarView()
-                .navigationTitle("All Activites")
+                .navigationTitle("All Activities")
                 .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -161,10 +179,13 @@ struct AllActivity: View {
 
 // === 7. Preview ===
 #Preview {
-    AllActivity()
-//        .environment(\.locale, Locale(identifier: "ar"))
-        .preferredColorScheme(.dark)
+    let previewManager = ActivityManager()
+    previewManager.dailyStatus[Date().startOfDay!] = .Logged
+    previewManager.dailyStatus[Calendar.current.date(byAdding: .day, value: -1, to: Date())!.startOfDay!] = .Freezed
+
+    return AllActivity()
+        .environmentObject(previewManager)
+        .preferredColorScheme(.dark) // الوضع الليلي
+
     
-
 }
-

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Hex Color Initializer Helper
+// MARK: - Hex Color Helper
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -8,57 +8,44 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8:
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (1, 1, 1, 0)
         }
-
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+        self.init(.sRGB, red: Double(r)/255, green: Double(g)/255, blue: Double(b)/255, opacity: Double(a)/255)
     }
 }
 
-
-// MARK: - Color Extension for App Colors
+// MARK: - App Colors (Dynamic)
 extension Color {
-    // الخلفية الرئيسية (الأسود العادي)
-    static let primaryBackground = Color.black
+    // 🩶 خلفية تتغير حسب المود
+    static var primaryBackground: Color { Color(.systemBackground) }
     
-    // اللون البرتقالي المميز (FF9230) - يستخدم لحالة "Learned"
+    // 🩺 خلفية ثانوية (مثل الكروت)
+    static var darkGreyBackground: Color { Color(.secondarySystemBackground) }
+
+    // 🟧 اللون البرتقالي الرئيسي
     static let accentOrange = Color(hex: "#FF9230")
-    // اللون البني الغامق لما تضغط لوق
-    static let LoggedColor = Color(hex: "#260D0D")
-    // اللون الاسود لما ينضغط فريز
+
+    // 🧊 اللون السماوي (Freezed)
+    static let freezedCyan = Color(red: 0/255, green: 210/255, blue: 224/255)
+
+    // 🎨 ألوان الحالات
+    static let LoggedColor = Color(hex: "#260D0D")   // ممكن تستبدلينه لاحقاً لو تبين أكثر وضوح
     static let FreezedColor = Color(hex: "#005359")
 
-    // اللون السماوي الجديد لحالة "Freezed" (0, 210, 224)
-    static let freezedCyan = Color(red: 0/255, green: 210/255, blue: 224/255)
-    
-    // لون النص الأساسي
-    static let primaryText = Color.white
-    // لون النص الثانوي
-    static let secondaryText = Color(white: 0.6)
-    
-    // لون خلفية الأزرار غير المختارة / اللون الثانوي (الرمادي الداكن)
-    static let darkGreyBackground = Color(white: 0.2)
-    
-    // اللون الجديد لنهاية التدرج اللوني في الأزرار غير المختارة: rgba(26, 26, 26, 1)
-    static let darkGradientEnd = Color(red: 26/255, green: 26/255, blue: 26/255)
+    // ✍️ ألوان النصوص (ديناميكية)
+    static var primaryText: Color { Color.primary }
+    static var secondaryText: Color { Color.secondary }
 
-    // لون شريط الإدخال أو الشريط الجانبي (كان أخضر/رمادي)
-    static let inputBarColor = Color(red: 0.05, green: 0.4, blue: 0.05) // لون داكن
+    // ☁️ لون شريط إدخال أو مكونات فرعية
+    static var inputBarColor: Color { Color(.tertiarySystemBackground) }
 
-    // تقدير لون التوهج/الظل الخفيف للزر الرئيسي
-    static let buttonGlow = Color.accentOrange.opacity(0.4)
-
+    // ✨ تأثير التوهج
+    static var buttonGlow: Color { accentOrange.opacity(0.4) }
 }

@@ -9,15 +9,17 @@ struct DurationButton: View {
 
     var body: some View {
         Button(action: {
-            selectedDuration = duration
-        }) {
+            // ✅ منع أي حركة أو وميض عند الضغط
+                selectedDuration = duration
+            }
+        ) {
             Text(duration.rawValue)
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(isSelected ? .primaryText : .secondaryText)
+                .foregroundColor(isSelected ? .primary : .secondary)
                 .padding(.horizontal, 20)
                 .frame(height: 58)
-                .glassEffect(.clear)
+                .glassEffect(.clear) // ✅ ترك التأثير كما هو
                 .background(
                     Group {
                         if isSelected {
@@ -25,8 +27,7 @@ struct DurationButton: View {
                                 .fill(Color.accentOrange)
                         }
                     }
-                        .glassEffect(.clear).frame(height: 58)
-
+                    .frame(height: 58)
                 )
         }
         .buttonStyle(.plain)
@@ -48,83 +49,81 @@ struct FirstPage: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.primaryBackground
-                    .edgesIgnoringSafeArea(.all)
-
+                // ✅ غيّرنا الخلفية إلى systemBackground لتتغير تلقائيًا مع المود
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 50) {
 
                     // Logo/Icon
                     HStack {
                         Spacer()
-                        
                         ZStack {
-                            // 1. الدائرة الداكنة
+                            // ✅ غيّرنا الخلفية من لون ثابت إلى لون نظامي
                             Circle()
-                                .fill(Color(red: 0.15, green: 0.05, blue: 0.05))
-
-                                .shadow(color: Color.orange.opacity(0.3), radius: 5, x: 0, y: 0)
+                                .fill(Color(.secondarySystemBackground))
+                                .shadow(color: Color.orange.opacity(0.3), radius: 5)
                                 .glassEffect(.clear)
-                            // 2. الشعار (SF Symbol)
+
                             Image(systemName: "flame.fill")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 50, height: 50)
-                                .foregroundColor(Color(red: 1.0, green: 0.65, blue: 0.2))
+                                .foregroundColor(Color.accentOrange)
                         }
-                        .frame(width: 109, height: 109) // حجم الإطار العام للدائرة
-                        .background(Color.black)       // خلفية سوداء
+                        .frame(width: 109, height: 109)
+                        // ✅ حذفنا Color.black واستبدلناه بـ لون النظام
+                        .background(Color(.systemBackground))
                         .padding(.top)
                         Spacer()
                     }
-
 
                     // Header Text
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Hello Learner")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            .foregroundColor(.primaryText)
+                            // ✅ غيّرنا من primaryText إلى .primary (لون النظام)
+                            .foregroundColor(.primary)
 
                         Text("This app will help you learn everyday!")
                             .font(.callout)
-                            .foregroundColor(.secondaryText)
+                            .foregroundColor(.secondary)
                     }
 
                     // Learning Topic Input
                     VStack(alignment: .leading, spacing: 1) {
                         HStack(spacing: 0) {
-                            Color.inputBarColor
+                            Color(.tertiarySystemBackground)
                                 .frame(width: 4, height: 20)
                                 .cornerRadius(2)
 
                             Text("I want to learn")
                                 .font(.body)
-                                .foregroundColor(.primaryText)
+                                .foregroundColor(.primary)
                                 .padding(.leading, 12)
                         }
 
                         TextField("Enter topic (e.g., Swift)", text: $learningTopic)
-                            .foregroundColor(.primaryText)
+                            .foregroundColor(.primary)
                             .accentColor(.accentOrange)
                             .padding(.vertical, 8)
 
                         Divider()
-                            .background(Color.secondaryText)
+                            .background(Color.secondary)
                     }
 
                     // Duration Selection
                     VStack(alignment: .leading, spacing: 15) {
                         Text("I want to learn it in a")
                             .font(.body)
-                            .foregroundColor(.primaryText)
+                            .foregroundColor(.primary)
 
                         HStack(spacing: 10) {
                             ForEach(Duration.allCases, id: \.self) { duration in
                                 DurationButton(
                                     duration: duration,
                                     selectedDuration: $selectedDuration
-
                                 )
                             }
                             Spacer()
@@ -143,7 +142,7 @@ struct FirstPage: View {
                             Text("Start learning")
                                 .font(.headline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.primaryText)
+                                .foregroundColor(.white) // ✅ ثابت لأن الزر برتقالي
                                 .frame(width: 250, height: 48)
                                 .glassEffect(.clear)
                                 .background(Color.accentOrange)
@@ -165,5 +164,8 @@ struct FirstPage: View {
 struct FirstPage_Previews: PreviewProvider {
     static var previews: some View {
         FirstPage()
+            .preferredColorScheme(.dark) // الوضع الليلي
+
     }
+
 }
