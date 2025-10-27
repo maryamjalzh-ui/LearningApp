@@ -9,16 +9,15 @@ struct DurationButton: View {
 
     var body: some View {
         Button(action: {
-                selectedDuration = duration
-            }
-        ) {
+            selectedDuration = duration
+        }) {
             Text(duration.rawValue)
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(isSelected ? .primary : .secondary)
                 .padding(.horizontal, 20)
                 .frame(height: 58)
-                .glassEffect(.clear) // ✅ ترك التأثير كما هو
+                .glassEffect(.clear)
                 .background(
                     Group {
                         if isSelected {
@@ -42,13 +41,14 @@ struct FirstPage: View {
         case year = "Year"
     }
 
+    // ✅ استدعاء المانجر المشترك من الـ Environment
+    @EnvironmentObject var activityManager: ActivityManager
     @State private var learningTopic: String = "Swift"
     @State private var selectedDuration: Duration = .week
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // ✅ غيّرنا الخلفية إلى systemBackground لتتغير تلقائيًا مع المود
                 Color(.systemBackground)
                     .ignoresSafeArea()
 
@@ -58,7 +58,6 @@ struct FirstPage: View {
                     HStack {
                         Spacer()
                         ZStack {
-                            // ✅ غيّرنا الخلفية من لون ثابت إلى لون نظامي
                             Circle()
                                 .fill(Color(.secondarySystemBackground))
                                 .shadow(color: Color.orange.opacity(0.3), radius: 5)
@@ -71,7 +70,6 @@ struct FirstPage: View {
                                 .foregroundColor(Color.accentOrange)
                         }
                         .frame(width: 109, height: 109)
-                        // ✅ حذفنا Color.black واستبدلناه بـ لون النظام
                         .background(Color(.systemBackground))
                         .padding(.top)
                         Spacer()
@@ -82,7 +80,6 @@ struct FirstPage: View {
                         Text("Hello Learner")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            // ✅ غيّرنا من primaryText إلى .primary (لون النظام)
                             .foregroundColor(.primary)
 
                         Text("This app will help you learn everyday!")
@@ -137,11 +134,11 @@ struct FirstPage: View {
                         NavigationLink(destination: SecondPage(
                             learningTopic: learningTopic,
                             selectedDuration: selectedDuration
-                        )) {
+                        ).environmentObject(activityManager)) {
                             Text("Start learning")
                                 .font(.headline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white) // ✅ ثابت لأن الزر برتقالي
+                                .foregroundColor(.white)
                                 .frame(width: 250, height: 48)
                                 .glassEffect(.clear)
                                 .background(Color.accentOrange)
@@ -163,8 +160,7 @@ struct FirstPage: View {
 struct FirstPage_Previews: PreviewProvider {
     static var previews: some View {
         FirstPage()
-            .preferredColorScheme(.dark) // الوضع الليلي
-
+            .environmentObject(ActivityManager()) // ✅ ضروري للمعاينة
+            .preferredColorScheme(.dark)
     }
-
 }

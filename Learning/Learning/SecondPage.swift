@@ -12,6 +12,10 @@ class ActivityManager: ObservableObject {
     @Published var startOfWeek: Date
     @Published var selectedDate: Date
     @Published var dailyStatus: [Date: ActivityStatus]
+    
+    // ✅ عدادات الهدف الحالي فقط
+    @Published var currentGoalLearned = 0
+    @Published var currentGoalFreezed = 0
 
     init() {
         let today = Date().startOfDay!
@@ -20,12 +24,26 @@ class ActivityManager: ObservableObject {
         self.selectedDate = today
         self.dailyStatus = [:]
     }
-    
+
     var daysLearned: Int { dailyStatus.values.filter { $0 == .Logged }.count }
     var daysFreezed: Int { dailyStatus.values.filter { $0 == .Freezed }.count }
 
     func updateStatus(to status: ActivityStatus) {
         dailyStatus[selectedDate.startOfDay!] = status
+
+        switch status {
+        case .Logged:
+            currentGoalLearned += 1
+        case .Freezed:
+            currentGoalFreezed += 1
+        default:
+            break
+        }
+    }
+    
+    func resetCountersForNewGoal() {
+        currentGoalLearned = 0
+        currentGoalFreezed = 0
     }
 }
 
@@ -117,7 +135,6 @@ struct SummaryCard: View {
         .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 45).fill(color.opacity(0.4)))
         .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
-        
     }
 }
 
@@ -178,54 +195,13 @@ struct WeekCalendarView: View {
     var body: some View {
         VStack(spacing: 20) {
             HStack {
-                // ✅ السهم على اليسار
-                
-                // الشهر والسنة
                 Text(monthYearDisplay)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
-                Button {
-                    tempDate = manager.selectedDate
-                    isShowingDatePicker = true
-                } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.title3)
-                        .foregroundColor(.accentOrange)
-                        .padding(.leading, 5 )
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $isShowingDatePicker) {
-                    VStack(spacing: 16) {
-                        DatePicker("", selection: $tempDate, displayedComponents: [.date])
-                            .datePickerStyle(.wheel)
-                            .labelsHidden()
-                        
-                        Button {
-                            manager.selectedDate = tempDate
-                            if let newStart = tempDate.startOfWeek {
-                                manager.startOfWeek = newStart
-                            }
-                            isShowingDatePicker = false
-                        } label: {
-                            Text("Done")
-                                .font(.headline)
-                                .foregroundColor(.primaryText)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Capsule().fill(Color.accentOrange))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding()
-                    .preferredColorScheme(.dark)
-                    .presentationDetents([.fraction(0.35)])
-                }
-                
-                
+
                 Spacer()
                 
-                // أزرار التنقل بين الأسابيع
                 Button {
                     if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: manager.startOfWeek) {
                         manager.startOfWeek = newDate
@@ -235,7 +211,6 @@ struct WeekCalendarView: View {
                         .font(.title2)
                         .foregroundColor(.accentOrange)
                 }
-                .buttonStyle(.plain)
                 
                 Button {
                     if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: manager.startOfWeek) {
@@ -246,10 +221,8 @@ struct WeekCalendarView: View {
                         .font(.title2)
                         .foregroundColor(.accentOrange)
                 }
-                .buttonStyle(.plain)
             }
             
-            // الأيام
             HStack(spacing: 0) {
                 ForEach(getWeekDays(), id: \.self) { date in
                     DateButton(manager: manager, date: date)
@@ -265,25 +238,15 @@ struct WeekCalendarView: View {
     }
 }
 
-// MARK: - Subview: Summary Cards
-struct SummaryCardsView: View {
-    @ObservedObject var manager: ActivityManager
-    
-    var body: some View {
-        HStack(spacing: 10) {
-            SummaryCard(value: manager.daysLearned, label: "Days Learned", color: Color.accentOrange.opacity(0.8), icon: "flame.fill", iconColor: .accentOrange)
-            SummaryCard(value: manager.daysFreezed, label: "Day Freezed", color: Color.freezedCyan.opacity(0.7), icon: "cube.fill", iconColor: .freezedCyan)
-        }
-    }
-}
-
 // MARK: - Subview: Secondary Action Button
 struct SecondaryActionButtonView: View {
     @ObservedObject var manager: ActivityManager
     let maxFreezes: Int
 
+    // ✅ يعتمد على العدادات الحالية للهدف
     var isDisabled: Bool {
-        manager.daysFreezed >= maxFreezes || manager.dailyStatus[manager.selectedDate.startOfDay!] == .Logged
+        manager.currentGoalFreezed >= maxFreezes ||
+        manager.dailyStatus[manager.selectedDate.startOfDay!] == .Logged
     }
 
     var body: some View {
@@ -302,45 +265,134 @@ struct SecondaryActionButtonView: View {
     }
 }
 
+
+// MARK: - Main View: SecondPage
 // MARK: - Main View: SecondPage
 struct SecondPage: View {
-    @StateObject private var manager = ActivityManager()
+    @EnvironmentObject var manager: ActivityManager
     var learningTopic: String
     var selectedDuration: FirstPage.Duration
-    
+
+    // ✅ عدد الأيام المطلوبة بناءً على نوع الهدف
+    private var goalDays: Int {
+        switch selectedDuration {
+        case .week:  return 7
+        case .month: return 30
+        case .year:  return 365
+        }
+    }
+
+    // ✅ يتحقق إذا المستخدم خلص الهدف (تعلم + تجميد)
+    private var isGoalDone: Bool {
+        let totalLogged = manager.currentGoalLearned
+        let totalFreezed = manager.currentGoalFreezed
+        let totalDays = totalLogged + totalFreezed
+        return totalDays >= goalDays
+    }
+
     var maxFreezes: Int {
         switch selectedDuration {
-        case .week: return 2
+        case .week:  return 2
         case .month: return 8
-        case .year: return 96
+        case .year:  return 96
         }
     }
 
     var body: some View {
         ZStack {
             Color.primaryBackground.ignoresSafeArea()
+
             VStack(spacing: 25) {
+                // ✅ الكارد الأساسي
                 VStack(spacing: 20) {
                     WeekCalendarView(manager: manager)
+                    
                     Text(learningTopic)
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundColor(.primaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading, 5)
-                    SummaryCardsView(manager: manager)
+                    
+                    // ✅ عدادات الهدف الحالي
+                    HStack(spacing: 10) {
+                        SummaryCard(
+                            value: manager.currentGoalLearned,
+                            label: "Days Learned",
+                            color: Color.accentOrange.opacity(0.8),
+                            icon: "flame.fill",
+                            iconColor: .accentOrange
+                        )
+                        SummaryCard(
+                            value: manager.currentGoalFreezed,
+                            label: "Days Freezed",
+                            color: Color.freezedCyan.opacity(0.7),
+                            icon: "cube.fill",
+                            iconColor: .freezedCyan
+                        )
+                    }
                 }
                 .padding(20)
-                .background(RoundedRectangle(cornerRadius: 40).fill(Color.darkGreyBackground.opacity(0.3)))
-                .overlay(RoundedRectangle(cornerRadius: 50).stroke(Color.gray, lineWidth: 0.3))
-                
-                MainActionButton(manager: manager)
-                SecondaryActionButtonView(manager: manager, maxFreezes: maxFreezes)
-                Text("\(manager.daysFreezed) out of \(maxFreezes) Freezes used")
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
+                .background(
+                    RoundedRectangle(cornerRadius: 40)
+                        .fill(Color.darkGreyBackground.opacity(0.3))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 50)
+                        .stroke(Color.gray, lineWidth: 0.3)
+                )
+
+                // ✅ إذا خلص الهدف تطلع شاشة التهنئة
+                if isGoalDone {
+                    VStack(spacing: 20) {
+                        Image(systemName: "hands.clap.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.accentOrange)
+                            .padding(.top, 30)
+
+                        Text("Well done!")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primaryText)
+
+                        Text("Goal completed! Start learning again or set a new learning goal.")
+                            .font(.callout)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondaryText)
+                            .padding(.horizontal, 20)
+
+                        // زر إنشاء هدف جديد
+                        NavigationLink(destination: LearningGoal().environmentObject(manager)) {
+                            Text("Set new learning goal")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .frame(width: 280, height: 50)
+                                .background(Color.accentOrange)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+
+                        // زر نفس الهدف
+                        Button(action: {
+                            manager.resetCountersForNewGoal()
+                        }) {
+                            Text("Set same learning goal and duration")
+                                .font(.footnote)
+                                .foregroundColor(.accentOrange)
+                        }
+                        .padding(.bottom, 40)
+                    }
+                    .transition(.opacity)
+                } else {
+                    // ✅ الوضع الطبيعي أثناء التعلم
+                    MainActionButton(manager: manager)
+                    SecondaryActionButtonView(manager: manager, maxFreezes: maxFreezes)
+                    Text("\(manager.currentGoalFreezed) out of \(maxFreezes) Freezes used")
+                        .font(.caption)
+                        .foregroundColor(.secondaryText)
+                }
             }
-            .padding(.horizontal, 30)
         }
         .tint(.accentOrange)
         .toolbar {
@@ -350,7 +402,7 @@ struct SecondPage: View {
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
             }
-            
+
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 15) {
                     NavigationLink(destination: AllActivity().environmentObject(manager)) {
@@ -358,8 +410,8 @@ struct SecondPage: View {
                             .font(.title3)
                             .padding(4)
                     }
-                    
-                    NavigationLink(destination: LearningGoal()) {
+
+                    NavigationLink(destination: LearningGoal().environmentObject(manager)) {
                         Image(systemName: "pencil.and.outline")
                             .font(.title2)
                             .padding(4)
@@ -370,14 +422,10 @@ struct SecondPage: View {
     }
 }
 
-
-// MARK: - Preview
-struct SecondPage_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            SecondPage(learningTopic: "Swift", selectedDuration: .week)
-        }
-        .preferredColorScheme(.dark) // الوضع الليلي
-
+#Preview {
+    NavigationStack {
+        SecondPage(learningTopic: "Swift", selectedDuration: .week)
+            .environmentObject(ActivityManager())
     }
+    .preferredColorScheme(.dark)
 }
