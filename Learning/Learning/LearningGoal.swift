@@ -2,8 +2,10 @@ import SwiftUI
 
 struct LearningGoal: View {
     @EnvironmentObject var manager: ActivityManager
-    @State private var learningTopic: String = "Swift"
+    @State private var learningTopic: String = ""
     @State private var selectedDuration: FirstPage.Duration = .week
+    @State private var showConfirmation = false
+    @State private var navigateToSecondPage = false
 
     var body: some View {
         NavigationStack {
@@ -46,6 +48,74 @@ struct LearningGoal: View {
                     Spacer()
                 }
                 .padding(.horizontal, 30)
+                .blur(radius: showConfirmation ? 3 : 0)
+
+                // ✅ نافذة التأكيد
+                if showConfirmation {
+                    VStack(spacing: 16) {
+                        Text("Update Learning goal")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primaryText)
+
+                        Text("If you update now, your streak will start over.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 10)
+
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                showConfirmation = false
+                            }) {
+                                Text("Dismiss")
+                                    .font(.headline)
+                                    .foregroundColor(.primaryText)
+                                    .frame(maxWidth: 132, maxHeight: 48)
+                                    .padding()
+                                    .background(RoundedRectangle(cornerRadius: 20).fill(Color.darkGreyBackground))
+
+                            }
+
+                            Button(action: {
+                                manager.resetCountersForNewGoal()
+                                showConfirmation = false
+                                navigateToSecondPage = true
+                                
+                            }) {
+                                Text("Update")
+                                    .font(.headline)
+                                    .foregroundColor(.primaryText)
+                                    .frame(maxWidth: 132, maxHeight: 48)
+                                    .padding()
+                                    .background(RoundedRectangle(cornerRadius: 20).fill(Color.accentOrange))
+
+                            }
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: 300, maxHeight: 184)
+                    .background(
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(Color.darkGreyBackground.opacity(0.3))
+                    )
+                    .cornerRadius(20)
+                    .shadow(radius: 20)
+                    .transition(.scale)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 50)
+                            .stroke(Color.gray, lineWidth: 0.3)
+                    )
+                }
+
+                // ✅ الانتقال بعد التأكيد
+                NavigationLink(
+                    destination: SecondPage(
+                        learningTopic: learningTopic,
+                        selectedDuration: selectedDuration
+                    ).environmentObject(manager),
+                    isActive: $navigateToSecondPage
+                ) { EmptyView() }
             }
             .accentColor(Color.accentOrange)
             .toolbar {
@@ -56,10 +126,9 @@ struct LearningGoal: View {
                         .foregroundColor(.primary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(destination: SecondPage(
-                        learningTopic: learningTopic,
-                        selectedDuration: selectedDuration
-                    ).environmentObject(manager)) { // ✅ هنا استخدمنا manager
+                    Button {
+                        showConfirmation = true
+                    } label: {
                         ZStack {
                             Circle()
                                 .fill(Color.accentOrange)
@@ -70,12 +139,8 @@ struct LearningGoal: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        manager.resetCountersForNewGoal()
-                    })
                     .buttonStyle(.plain)
                 }
-
             }
         }
     }
