@@ -185,7 +185,6 @@ struct AllActivity: View {
 
     return AllActivity()
         .environmentObject(previewManager)
-        .preferredColorScheme(.dark) // الوضع الليلي
 
     
 }

@@ -502,5 +502,4 @@ struct SecondPage: View {
         SecondPage(learningTopic: "Swift", selectedDuration: .week)
             .environmentObject(ActivityManager())
     }
-    .preferredColorScheme(.dark)
 }

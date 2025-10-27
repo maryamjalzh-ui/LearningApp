@@ -15,7 +15,6 @@ struct LearningApp: App {
         WindowGroup {
             FirstPage()
                 .environmentObject(activityManager) // تمرير المانجر لكل الصفحات
-                .preferredColorScheme(.dark) // الوضع الليلي افتراضيًا
         }
     }
 }

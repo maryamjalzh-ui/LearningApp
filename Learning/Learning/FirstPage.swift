@@ -161,6 +161,5 @@ struct FirstPage_Previews: PreviewProvider {
     static var previews: some View {
         FirstPage()
             .environmentObject(ActivityManager()) // ✅ ضروري للمعاينة
-            .preferredColorScheme(.dark)
     }
 }

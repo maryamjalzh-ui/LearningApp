@@ -149,5 +149,4 @@ struct LearningGoal: View {
 #Preview {
     LearningGoal()
         .environmentObject(ActivityManager())
-        .preferredColorScheme(.dark)
 }
