@@ -117,6 +117,7 @@ struct SummaryCard: View {
         .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 45).fill(color.opacity(0.4)))
         .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
+        
     }
 }
 
@@ -350,7 +351,6 @@ struct SecondPage: View {
                     .foregroundColor(.primaryText)
             }
             
-            // ✅ جمع الزرين داخل HStack
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 15) {
                     NavigationLink(destination: AllActivity().environmentObject(manager)) {

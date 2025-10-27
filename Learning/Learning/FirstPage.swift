@@ -9,7 +9,6 @@ struct DurationButton: View {
 
     var body: some View {
         Button(action: {
-            // ✅ منع أي حركة أو وميض عند الضغط
                 selectedDuration = duration
             }
         ) {
