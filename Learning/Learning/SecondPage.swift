@@ -101,7 +101,7 @@ struct DateButton: View {
                             if isSelected && !isPastDay {
                                 Circle().fill(Color.orange.opacity(0.90))
                             } else if status == .Logged {
-                                Circle().fill(Color.accentOrange.opacity(0.3))
+                                Circle().fill(Color.orange.opacity(0.3))
                             } else if status == .Freezed {
                                 Circle().fill(Color.freezedCyan.opacity(0.3))
                             } else {
@@ -133,7 +133,7 @@ struct SummaryCard: View {
             
             VStack(alignment: .leading) {
                 Text("\(value)")
-                    .font(.largeTitle)
+                    .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
                 Text(label)
@@ -161,7 +161,13 @@ struct MainActionButton: View {
         case .Freezed: return "Day Freezed"
         }
     }
-    
+    var textColor: Color {
+            switch manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default {
+            case .Default: return .primaryText
+            case .Logged: return .accentOrange
+            case .Freezed: return .freezedCyan
+            }
+        }
     var bgColor: Color {
         switch manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default {
         case .Default: return .accentOrange
@@ -170,21 +176,26 @@ struct MainActionButton: View {
         }
     }
     
+    var isDisabled: Bool {
+            let status = manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default
+            return status == .Logged || status == .Freezed
+        }
+
     var body: some View {
         Button(action: { manager.updateStatus(to: .Logged) }) {
             Text(text)
                 .font(.title2)
                 .fontWeight(.heavy)
-                .foregroundColor(.primaryText)
+                .foregroundColor(textColor) // ← هنا التغيير
                 .frame(width: 250, height: 250)
                 .background(
                     Circle()
                         .fill(bgColor)
-                        .shadow(color: Color.orange.opacity(0.3), radius: 5)
-                        .glassEffect(.clear)
+                        .shadow(color: Color.orange.opacity(0.5), radius: 10)
+                        .glassEffect(.clear.tint(.buttonGlow))
                 )
         }
-        .buttonStyle(.plain)
+        .disabled(isDisabled)
     }
 }
 
@@ -206,12 +217,24 @@ struct WeekCalendarView: View {
     
     var body: some View {
         VStack(spacing: 20) {
+            // 🔹 العنوان مع الأسهم واختيار التاريخ
             HStack {
-                Text(monthYearDisplay)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primaryText)
-
+                HStack(spacing: 6) {
+                    Text(monthYearDisplay)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primaryText)
+                    
+                    Button(action: {
+                        tempDate = manager.startOfWeek
+                        isShowingDatePicker.toggle()
+                    }) {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.accentOrange)
+                    }
+                }
+                
                 Spacer()
                 
                 Button {
@@ -220,8 +243,9 @@ struct WeekCalendarView: View {
                     }
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.title2)
+                        .font(.title3)
                         .foregroundColor(.accentOrange)
+                        .padding(15)
                 }
                 
                 Button {
@@ -230,11 +254,45 @@ struct WeekCalendarView: View {
                     }
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.title2)
+                        .font(.title3)
                         .foregroundColor(.accentOrange)
                 }
             }
+            .sheet(isPresented: $isShowingDatePicker) {
+                VStack {
+                    DatePicker(
+                        "Select Date",
+                        selection: $tempDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .colorScheme(.dark)
+                    .accentColor(.accentOrange)
+                    .padding()
+                    
+                    Button("Done") {
+                        if let newStart = tempDate.startOfWeek {
+                            manager.startOfWeek = newStart
+
+                        }
+                        isShowingDatePicker = false
+                        
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.accentOrange)
+                    .glassEffect(.clear)
+                    .cornerRadius(15)
+                    .padding(.horizontal)
+                }
+                .presentationDetents([.height(300)])
+                .background(Color.primaryBackground)
+            }
             
+            // 🔹 الأيام
             HStack(spacing: 0) {
                 ForEach(getWeekDays(), id: \.self) { date in
                     DateButton(manager: manager, date: date)
@@ -255,14 +313,17 @@ struct SecondaryActionButtonView: View {
     @ObservedObject var manager: ActivityManager
     let maxFreezes: Int
 
-    // ✅ يعتمد على العدادات الحالية للهدف
     var isDisabled: Bool {
-        manager.currentGoalFreezed >= maxFreezes ||
-        manager.dailyStatus[manager.selectedDate.startOfDay!] == .Logged
+        let status = manager.dailyStatus[manager.selectedDate.startOfDay!] ?? .Default
+        return status == .Logged || status == .Freezed || manager.currentGoalFreezed >= maxFreezes
     }
 
     var body: some View {
-        Button(action: { manager.updateStatus(to: .Freezed) }) {
+        Button(action: {
+            if !isDisabled {
+                manager.updateStatus(to: .Freezed)
+            }
+        }) {
             Text("Log as Freezed")
                 .font(.headline)
                 .fontWeight(.semibold)
@@ -347,7 +408,7 @@ struct SecondPage: View {
                 .padding(20)
                 .background(
                     RoundedRectangle(cornerRadius: 40)
-                        .fill(Color.darkGreyBackground.opacity(0.3))
+                        .fill(Color.darkGreyBackground.opacity(0.5))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 50)
@@ -380,6 +441,7 @@ struct SecondPage: View {
                                 .fontWeight(.semibold)
                                 .foregroundColor(.white)
                                 .frame(width: 280, height: 50)
+                                .glassEffect(.clear)
                                 .background(Color.accentOrange)
                                 .clipShape(Capsule())
                         }
@@ -392,6 +454,7 @@ struct SecondPage: View {
                             Text("Set same learning goal and duration")
                                 .font(.footnote)
                                 .foregroundColor(.accentOrange)
+                            
                         }
                         .padding(.bottom, 40)
                     }

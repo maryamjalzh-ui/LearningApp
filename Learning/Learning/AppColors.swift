@@ -30,14 +30,14 @@ extension Color {
     static var darkGreyBackground: Color { Color(.secondarySystemBackground) }
 
     // 🟧 اللون البرتقالي الرئيسي
-    static let accentOrange = Color(hex: "#FF9230")
+    static let accentOrange = Color(hex: "#E06D06")
 
     // 🧊 اللون السماوي (Freezed)
-    static let freezedCyan = Color(red: 0/255, green: 210/255, blue: 224/255)
+    static let freezedCyan = Color(hex: "01A8B3")
 
     // 🎨 ألوان الحالات
-    static let LoggedColor = Color(hex: "#260D0D")   // ممكن تستبدلينه لاحقاً لو تبين أكثر وضوح
-    static let FreezedColor = Color(hex: "#005359")
+    static let LoggedColor = Color(hex: "#321B07")   // ممكن تستبدلينه لاحقاً لو تبين أكثر وضوح
+    static let FreezedColor = Color(hex: "#003A3D")
 
     // ✍️ ألوان النصوص (ديناميكية)
     static var primaryText: Color { Color.primary }

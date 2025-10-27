@@ -43,7 +43,7 @@ struct FirstPage: View {
 
     // ✅ استدعاء المانجر المشترك من الـ Environment
     @EnvironmentObject var activityManager: ActivityManager
-    @State private var learningTopic: String = "Swift"
+    @State private var learningTopic: String = ""
     @State private var selectedDuration: Duration = .week
 
     var body: some View {
